@@ -5,6 +5,18 @@ const DocumentValidation = require("../../models/DocumentValidation");
 
 const JWT_SECRET = "chave-super-secreta";
 
+const rateLimit = require("express-rate-limit");
+// limiter de taxa: máximo de 100 solicitações por 15 minutos por IP
+const limiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 500, // máximo de 500 solicitações por IP
+  standardHeaders: true, // informa os headers RateLimit
+  legacyHeaders: false, // desativa os headers X-RateLimit
+});
+
+// Aplicar limiter de taxa a todas as rotas neste roteador
+router.use(limiter);
+
 function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader)
@@ -21,7 +33,7 @@ function verifyToken(req, res, next) {
 }
 
 // ✅ Criar validação
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", limiter, verifyToken, async (req, res) => {
   try {
     const { expense_id, document_type, document_number, validation_status, validation_date } = req.body;
 
@@ -41,7 +53,7 @@ router.post("/", verifyToken, async (req, res) => {
 });
 
 // ✅ Atualizar validação
-router.put("/", verifyToken, async (req, res) => {
+router.put("/", limiter, verifyToken, async (req, res) => {
   try {
     const { expense_id, document_type, document_number, validation_status, validation_date } = req.body;
 
@@ -62,7 +74,7 @@ router.put("/", verifyToken, async (req, res) => {
 });
 
 // ✅ Visualizar todas as validações
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", limiter, verifyToken, async (req, res) => {
   try {
     const validations = await DocumentValidation.findAll();
     res.json(validations);
@@ -73,7 +85,7 @@ router.get("/", verifyToken, async (req, res) => {
 });
 
 // ✅ Visualizar validação específica
-router.post("/get", verifyToken, async (req, res) => {
+router.post("/get", limiter, verifyToken, async (req, res) => {
   try {
     const { expense_id } = req.body;
     const validation = await DocumentValidation.findOne({ where: { expense_id } });
@@ -86,7 +98,7 @@ router.post("/get", verifyToken, async (req, res) => {
 });
 
 // ✅ Deletar validação
-router.delete("/", verifyToken, async (req, res) => {
+router.delete("/", limiter, verifyToken, async (req, res) => {
   try {
     const { expense_id } = req.body;
     const validation = await DocumentValidation.findOne({ where: { expense_id } });

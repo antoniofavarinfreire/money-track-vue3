@@ -5,6 +5,18 @@ const IncomeTaxCategory = require("../../models/IncomeTax_Categories"); // model
 
 const JWT_SECRET = "chave-super-secreta"; // mesma chave usada no userRouter
 
+const rateLimit = require("express-rate-limit");
+// limiter de taxa: máximo de 100 solicitações por 15 minutos por IP
+const limiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 500, // máximo de 500 solicitações por IP
+  standardHeaders: true, // informa os headers RateLimit
+  legacyHeaders: false, // desativa os headers X-RateLimit
+});
+
+// Aplicar limiter de taxa a todas as rotas neste roteador
+router.use(limiter);
+
 // 🔐 Middleware de verificação de token JWT
 function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -25,7 +37,7 @@ function verifyToken(req, res, next) {
 router.use(verifyToken);
 
 // ✅ 1️⃣ Criar categoria de imposto de renda específica
-router.post("/", async (req, res) => {
+router.post("/", limiter, async (req, res) => {
   try {
     const { name, deductible, description } = req.body;
 
@@ -56,7 +68,7 @@ router.post("/", async (req, res) => {
 });
 
 // ✅ 2️⃣ Visualizar todas as categorias
-router.get("/", async (req, res) => {
+router.get("/", limiter, async (req, res) => {
   try {
     const categories = await IncomeTaxCategory.findAll({
       attributes: ["income_tax_category_id", "name", "deductible", "description"],
@@ -69,7 +81,7 @@ router.get("/", async (req, res) => {
 });
 
 // ✅ 3️⃣ Visualizar categoria específica via JSON
-router.post("/getById", async (req, res) => {
+router.post("/getById", limiter, async (req, res) => {
   try {
     const { id } = req.body;
     if (!id)
@@ -90,7 +102,7 @@ router.post("/getById", async (req, res) => {
 });
 
 // ✅ 4️⃣ Atualizar categoria específica
-router.put("/", async (req, res) => {
+router.put("/", limiter, async (req, res) => {
   try {
     const { id, name, deductible, description } = req.body;
 
@@ -118,7 +130,7 @@ router.put("/", async (req, res) => {
 });
 
 // ✅ 5️⃣ Deletar categoria específica
-router.delete("/", async (req, res) => {
+router.delete("/", limiter, async (req, res) => {
   try {
     const { id } = req.body;
 

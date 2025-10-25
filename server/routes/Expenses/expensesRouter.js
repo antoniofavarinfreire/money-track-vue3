@@ -4,6 +4,18 @@ const jwt = require("jsonwebtoken");
 const Expense = require("../../models/Expenses");
 const JWT_SECRET = "chave-super-secreta";
 
+const rateLimit = require("express-rate-limit");
+// limiter de taxa: máximo de 100 solicitações por 15 minutos por IP
+const limiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 500, // máximo de 500 solicitações por IP
+  standardHeaders: true, // informa os headers RateLimit
+  legacyHeaders: false, // desativa os headers X-RateLimit
+});
+
+// Aplicar limiter de taxa a todas as rotas neste roteador
+router.use(limiter);
+
 // Middleware JWT
 function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;

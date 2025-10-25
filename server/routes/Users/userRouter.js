@@ -6,6 +6,18 @@ const User = require("../../models/Users"); // modelo Sequelize
 
 const JWT_SECRET = "chave-super-secreta";
 
+const rateLimit = require("express-rate-limit");
+// limiter de taxa: máximo de 100 solicitações por 15 minutos por IP
+const limiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 500, // máximo de 500 solicitações por IP
+  standardHeaders: true, // informa os headers RateLimit
+  legacyHeaders: false, // desativa os headers X-RateLimit
+});
+
+// Aplicar limiter de taxa a todas as rotas neste roteador
+router.use(limiter);
+
 // 🧩 Middleware de verificação do token JWT
 function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -23,7 +35,7 @@ function verifyToken(req, res, next) {
 }
 
 // ✅ LOGIN (não requer token)
-router.post("/login", async (req, res) => {
+router.post("/login", limiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
@@ -54,7 +66,7 @@ router.post("/login", async (req, res) => {
 });
 
 // ✅ CRIAR USUÁRIO (público - registro)
-router.post("/", async (req, res) => {
+router.post("/", limiter, async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const existingUser = await User.findOne({ where: { email } });
@@ -88,7 +100,7 @@ router.post("/", async (req, res) => {
 router.use(verifyToken);
 
 // ✅ VISUALIZAR TODOS OS USUÁRIOS
-router.get("/", async (req, res) => {
+router.get("/", limiter, async (req, res) => {
   try {
     const users = await User.findAll({
       attributes: ["user_id", "name", "email", "registration_date"],
@@ -101,7 +113,7 @@ router.get("/", async (req, res) => {
 });
 
 // ✅ VISUALIZAR USUÁRIO ESPECÍFICO
-router.post("/getUserById", async (req, res) => {
+router.post("/getUserById", limiter, async (req, res) => {
   try {
     const { id } = req.body;
 
@@ -125,7 +137,7 @@ router.post("/getUserById", async (req, res) => {
 });
 
 // ✅ ATUALIZAR USUÁRIO ESPECÍFICO
-router.put("/:id", async (req, res) => {
+router.put("/:id", limiter, async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const user = await User.findByPk(req.params.id);
@@ -154,7 +166,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // ✅ DELETAR USUÁRIO ESPECÍFICO
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", limiter, async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ error: "Usuário não encontrado" });

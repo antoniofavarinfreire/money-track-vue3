@@ -4,6 +4,18 @@ const jwt = require("jsonwebtoken");
 const FiscalRule = require("../../models/FiscalRules"); // Modelo Sequelize
 const JWT_SECRET = "chave-super-secreta";
 
+const rateLimit = require("express-rate-limit");
+// limiter de taxa: máximo de 100 solicitações por 15 minutos por IP
+const limiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 500, // máximo de 500 solicitações por IP
+  standardHeaders: true, // informa os headers RateLimit
+  legacyHeaders: false, // desativa os headers X-RateLimit
+});
+
+// Aplicar limiter de taxa a todas as rotas neste roteador
+router.use(limiter);
+
 // Middleware de verificação do token
 function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -21,7 +33,7 @@ function verifyToken(req, res, next) {
 }
 
 // ✅ Criar regra fiscal
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", limiter, verifyToken, async (req, res) => {
   try {
     const { fiscal_year, income_tax_category_id, annual_limit, monthly_limit } =
       req.body;
@@ -50,7 +62,7 @@ router.post("/", verifyToken, async (req, res) => {
 });
 
 // ✅ Atualizar regra fiscal específica
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", limiter, verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { annual_limit, monthly_limit } = req.body;
@@ -71,7 +83,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 });
 
 // ✅ Visualizar todas as regras fiscais
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", limiter, verifyToken, async (req, res) => {
   try {
     const rules = await FiscalRule.findAll();
     res.json(rules);
@@ -82,7 +94,7 @@ router.get("/", verifyToken, async (req, res) => {
 });
 
 // ✅ Visualizar regra fiscal específica
-router.get("/:id", verifyToken, async (req, res) => {
+router.get("/:id", limiter, verifyToken, async (req, res) => {
   try {
     const rule = await FiscalRule.findByPk(req.params.id);
     if (!rule) return res.status(404).json({ error: "Regra não encontrada" });
@@ -94,7 +106,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 });
 
 // ✅ Deletar regra fiscal específica
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", limiter, verifyToken, async (req, res) => {
   try {
     const rule = await FiscalRule.findByPk(req.params.id);
     if (!rule) return res.status(404).json({ error: "Regra não encontrada" });
