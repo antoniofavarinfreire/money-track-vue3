@@ -11,10 +11,14 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ChartCard: typeof import('./components/Cards/ChartCard.vue')['default']
     HelloWorld: typeof import('./components/HelloWorld.vue')['default']
+    OrderedTable: typeof import('./components/Tables/OrderedTable.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SideBar: typeof import('./components/SideBarPlugin/SideBar.vue')['default']
+    SimpleTable: typeof import('./components/Tables/SimpleTable.vue')['default']
+    StatsCard: typeof import('./components/Cards/StatsCard.vue')['default']
     TopNavBar: typeof import('./components/TopNavBar/TopNavBar.vue')['default']
   }
 }

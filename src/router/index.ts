@@ -22,11 +22,11 @@ const routes = [
       //   name: "User Profile",
       //   component: UserProfile,
       // },
-      // {
-      //   path: "table",
-      //   name: "Table List",
-      //   component: TableList,
-      // },
+      {
+        path: "table",
+        name: "Movimentação Financeira",
+        component: () => import ('@/pages/TableList.vue'),
+      },
       // {
       //   path: "typography",
       //   name: "Typography",

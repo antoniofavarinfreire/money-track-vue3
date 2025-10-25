@@ -8,6 +8,17 @@
       width="260"
     >
       <!-- <mobile-menu /> -->
+      <div class="d-flex align-center mt-5 mb-5">
+        <v-img
+          src="../../assets/imgs/logo_money_track.png"
+          alt="Money Track Logo"
+          max-height="6vh"
+          max-width="6vw"
+          contain
+        />
+        <span style="font-size: 20px">Money track</span>
+      </div>
+
       <v-list>
         <v-list-item link :to="'/app/dashboard'" active-class="active-item">
           <template v-slot:prepend>
@@ -20,33 +31,32 @@
           <template v-slot:prepend>
             <v-icon>mdi-content-paste</v-icon>
           </template>
-          <v-list-item-title>Registro de gastos</v-list-item-title>
-        </v-list-item>
-
-        <v-list-item link :to="'/app/typography'" active-class="active-item">
-          <template v-slot:prepend>
-            <v-icon>mdi-library-books</v-icon>
-          </template>
-          <v-list-item-title>Typography</v-list-item-title>
+          <v-list-item-title>Movimentação Financeira</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
-
-    <TopNavBar />
+    <v-main>
+      <v-container fluid>
+        <TopNavBar />
+        <Content />
+      </v-container>
+    </v-main>
   </v-app>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import TopNavBar from "@/components/TopNavBar/TopNavBar.vue";
+import Content from "./Content.vue";
 export default defineComponent({
   name: "DashboardLayout",
   components: {
     TopNavBar,
+    Content,
   },
   setup() {
     const drawer = ref(true);
-    const sidebarBackground = ref("black");
+    const sidebarBackground = ref("#1b1f23");
 
     return {
       drawer,
