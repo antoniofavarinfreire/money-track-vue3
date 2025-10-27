@@ -33,7 +33,7 @@ function verifyToken(req, res, next) {
 }
 
 // ✅ Criar Expense
-router.post("/", verifyToken, async (req, res) => {
+router.post("/create-id-expense", limiter, verifyToken, async (req, res) => {
   try {
     const { user_id, income_tax_category_id, expense_date, amount, description, validated_for_tax, invoice_file_path } = req.body;
     const newExpense = await Expense.create({
@@ -53,7 +53,7 @@ router.post("/", verifyToken, async (req, res) => {
 });
 
 // ✅ Visualizar todos Expenses
-router.get("/", verifyToken, async (req, res) => {
+router.get("/view-id-all-expense", limiter, verifyToken, async (req, res) => {
   try {
     const expenses = await Expense.findAll();
     res.json(expenses);
@@ -64,7 +64,7 @@ router.get("/", verifyToken, async (req, res) => {
 });
 
 // ✅ Visualizar Expense específico
-router.post("/getById", verifyToken, async (req, res) => {
+router.post("/view-id-expense", limiter, verifyToken, async (req, res) => {
   try {
     const { id } = req.body;
     const expense = await Expense.findByPk(id);
@@ -77,7 +77,7 @@ router.post("/getById", verifyToken, async (req, res) => {
 });
 
 // ✅ Atualizar Expense específico
-router.put("/", verifyToken, async (req, res) => {
+router.put("/update-id-expense", limiter, verifyToken, async (req, res) => {
   try {
     const { expense_id, user_id, income_tax_category_id, expense_date, amount, description, validated_for_tax, invoice_file_path } = req.body;
     const expense = await Expense.findByPk(expense_id);
@@ -92,7 +92,7 @@ router.put("/", verifyToken, async (req, res) => {
 });
 
 // ✅ Deletar Expense específico
-router.delete("/", verifyToken, async (req, res) => {
+router.delete("/delete-id-expense", limiter, verifyToken, async (req, res) => {
   try {
     const { expense_id } = req.body;
     const expense = await Expense.findByPk(expense_id);
@@ -103,6 +103,134 @@ router.delete("/", verifyToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao deletar expense" });
+  }
+});
+
+// ✅ Criar Expense (sempre vinculado ao usuário logado)
+router.post("/create-user-expense", limiter, verifyToken, async (req, res) => {
+  try {
+    const { income_tax_category_id, expense_date, amount, description, validated_for_tax, invoice_file_path } = req.body;
+
+    const newExpense = await Expense.create({
+      user_id: req.userId,
+      income_tax_category_id,
+      expense_date,
+      amount,
+      description,
+      validated_for_tax,
+      invoice_file_path,
+    });
+
+    res.status(201).json(newExpense);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao criar despesa" });
+  }
+});
+
+// ✅ Visualizar todas as despesas do usuário logado
+router.get("/view-user-all-expenses", limiter, verifyToken, async (req, res) => {
+  try {
+    const expenses = await Expense.findAll({
+      where: { user_id: req.userId },
+    });
+    res.json(expenses);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar despesas" });
+  }
+});
+
+// ✅ Visualizar uma despesa específica (apenas se for do usuário logado)
+router.post("/view-user-expense", limiter, verifyToken, async (req, res) => {
+  try {
+    const { id } = req.body;
+    const expense = await Expense.findOne({
+      where: { expense_id: id, user_id: req.userId },
+    });
+    if (!expense) return res.status(404).json({ error: "Despesa não encontrada" });
+    res.json(expense);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar despesa" });
+  }
+});
+
+// ✅ Atualizar despesa do usuário logado
+router.put("/update-user-expense", limiter, verifyToken, async (req, res) => {
+  try {
+    const { expense_id, income_tax_category_id, expense_date, amount, description, validated_for_tax, invoice_file_path } = req.body;
+
+    const expense = await Expense.findOne({
+      where: { expense_id, user_id: req.userId },
+    });
+    if (!expense) return res.status(404).json({ error: "Despesa não encontrada" });
+
+    await expense.update({
+      income_tax_category_id,
+      expense_date,
+      amount,
+      description,
+      validated_for_tax,
+      invoice_file_path,
+    });
+
+    res.json({ message: "Despesa atualizada com sucesso", expense });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao atualizar despesa" });
+  }
+});
+
+// ✅ Deletar despesa do usuário logado
+router.delete("/delete-user-expense", limiter, verifyToken, async (req, res) => {
+  try {
+    const { expense_id } = req.body;
+
+    const expense = await Expense.findOne({
+      where: { expense_id, user_id: req.userId },
+    });
+    if (!expense) return res.status(404).json({ error: "Despesa não encontrada" });
+
+    await expense.destroy();
+    res.json({ message: "Despesa deletada com sucesso" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao deletar despesa" });
+  }
+});
+
+// ✅ Retornar despesas com flag de dedutibilidade
+router.get("/with-deductible-flag", limiter, verifyToken, async (req, res) => {
+  try {
+    const expenses = await Expense.findAll({
+      where: { user_id: req.userId },
+      include: [
+        {
+          model: IncomeTaxCategory,
+          as: "category",
+          attributes: ["name", "deductible"],
+        },
+      ],
+    });
+
+    // adiciona a flag dedutível no retorno
+    const formatted = expenses.map((e) => ({
+      expense_id: e.expense_id,
+      expense_date: e.expense_date,
+      amount: e.amount,
+      description: e.description,
+      validated_for_tax: e.validated_for_tax,
+      invoice_file_path: e.invoice_file_path,
+      income_tax_category_id: e.income_tax_category_id,
+      is_deductible: e.category?.deductible === 1,
+      category_name: e.category?.name || null,
+    }));
+
+    res.json(formatted);
+  } catch (error) {
+    console.error("Erro ao buscar despesas com flag dedutível:", error);
+    res.status(500).json({ error: "Erro ao buscar despesas com flag dedutível." });
   }
 });
 

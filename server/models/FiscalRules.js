@@ -49,10 +49,4 @@ const FiscalRule = sequelize.define(
   }
 );
 
-// Associação com IncomeTaxCategories
-FiscalRule.belongsTo(IncomeTaxCategory, {
-  foreignKey: "income_tax_category_id",
-  as: "category",
-});
-
 module.exports = FiscalRule;

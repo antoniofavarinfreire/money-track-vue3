@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../database/db');
+const FiscalRulesLimit = require("./FiscalRules");
 
 const IncomeTaxCategory = sequelize.define(
   "IncomeTaxCategory",

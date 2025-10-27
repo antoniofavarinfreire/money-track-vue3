@@ -37,7 +37,7 @@ function verifyToken(req, res, next) {
 router.use(verifyToken);
 
 // ✅ 1️⃣ Criar categoria de imposto de renda específica
-router.post("/", limiter, async (req, res) => {
+router.post("/create-category", limiter, async (req, res) => {
   try {
     const { name, deductible, description } = req.body;
 
@@ -68,7 +68,7 @@ router.post("/", limiter, async (req, res) => {
 });
 
 // ✅ 2️⃣ Visualizar todas as categorias
-router.get("/", limiter, async (req, res) => {
+router.get("/view-all-category", limiter, async (req, res) => {
   try {
     const categories = await IncomeTaxCategory.findAll({
       attributes: ["income_tax_category_id", "name", "deductible", "description"],
@@ -81,7 +81,7 @@ router.get("/", limiter, async (req, res) => {
 });
 
 // ✅ 3️⃣ Visualizar categoria específica via JSON
-router.post("/getById", limiter, async (req, res) => {
+router.post("/view-id-category", limiter, async (req, res) => {
   try {
     const { id } = req.body;
     if (!id)
@@ -102,7 +102,7 @@ router.post("/getById", limiter, async (req, res) => {
 });
 
 // ✅ 4️⃣ Atualizar categoria específica
-router.put("/", limiter, async (req, res) => {
+router.put("/update-id-category", limiter, async (req, res) => {
   try {
     const { id, name, deductible, description } = req.body;
 
@@ -130,7 +130,7 @@ router.put("/", limiter, async (req, res) => {
 });
 
 // ✅ 5️⃣ Deletar categoria específica
-router.delete("/", limiter, async (req, res) => {
+router.delete("/delete-id-category", limiter, async (req, res) => {
   try {
     const { id } = req.body;
 

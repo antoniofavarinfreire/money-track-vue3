@@ -33,7 +33,7 @@ function verifyToken(req, res, next) {
 }
 
 // ✅ Criar regra fiscal
-router.post("/", limiter, verifyToken, async (req, res) => {
+router.post("/create-tax-rule", limiter, verifyToken, async (req, res) => {
   try {
     const { fiscal_year, income_tax_category_id, annual_limit, monthly_limit } =
       req.body;
@@ -62,7 +62,7 @@ router.post("/", limiter, verifyToken, async (req, res) => {
 });
 
 // ✅ Atualizar regra fiscal específica
-router.put("/:id", limiter, verifyToken, async (req, res) => {
+router.put("/update-id-tax-rule/:id", limiter, verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { annual_limit, monthly_limit } = req.body;
@@ -83,7 +83,7 @@ router.put("/:id", limiter, verifyToken, async (req, res) => {
 });
 
 // ✅ Visualizar todas as regras fiscais
-router.get("/", limiter, verifyToken, async (req, res) => {
+router.get("/view-all-tax-rule", limiter, verifyToken, async (req, res) => {
   try {
     const rules = await FiscalRule.findAll();
     res.json(rules);
@@ -94,7 +94,7 @@ router.get("/", limiter, verifyToken, async (req, res) => {
 });
 
 // ✅ Visualizar regra fiscal específica
-router.get("/:id", limiter, verifyToken, async (req, res) => {
+router.get("/view-id-tax-rule/:id", limiter, verifyToken, async (req, res) => {
   try {
     const rule = await FiscalRule.findByPk(req.params.id);
     if (!rule) return res.status(404).json({ error: "Regra não encontrada" });
@@ -106,7 +106,7 @@ router.get("/:id", limiter, verifyToken, async (req, res) => {
 });
 
 // ✅ Deletar regra fiscal específica
-router.delete("/:id", limiter, verifyToken, async (req, res) => {
+router.delete("/delete-id-tax-rule/:id", limiter, verifyToken, async (req, res) => {
   try {
     const rule = await FiscalRule.findByPk(req.params.id);
     if (!rule) return res.status(404).json({ error: "Regra não encontrada" });
@@ -116,6 +116,33 @@ router.delete("/:id", limiter, verifyToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro interno do servidor." });
+  }
+});
+
+// ✅ Retornar todas as categorias com os limites fiscais correspondentes
+router.get("/tax-limit-with-categories", limiter, verifyToken, async (req, res) => {
+  try {
+    const categories = await IncomeTaxCategory.findAll({
+      attributes: ["income_tax_category_id", "name", "deductible", "description"],
+      include: [
+        {
+          model: FiscalRulesLimit,
+          as: "fiscal_limits",
+          attributes: [
+            "rule_id",
+            "fiscal_year",
+            "annual_limit",
+            "monthly_limit",
+            "last_updated",
+          ],
+        },
+      ],
+    });
+
+    res.json(categories);
+  } catch (error) {
+    console.error("Erro ao buscar categorias com limites:", error);
+    res.status(500).json({ error: "Erro ao buscar categorias com limites fiscais." });
   }
 });
 

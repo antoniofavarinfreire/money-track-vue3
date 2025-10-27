@@ -66,7 +66,7 @@ router.post("/login", limiter, async (req, res) => {
 });
 
 // ✅ CRIAR USUÁRIO (público - registro)
-router.post("/", limiter, async (req, res) => {
+router.post("/create-user", limiter, async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const existingUser = await User.findOne({ where: { email } });
@@ -100,7 +100,7 @@ router.post("/", limiter, async (req, res) => {
 router.use(verifyToken);
 
 // ✅ VISUALIZAR TODOS OS USUÁRIOS
-router.get("/", limiter, async (req, res) => {
+router.get("/view-all-users", limiter, async (req, res) => {
   try {
     const users = await User.findAll({
       attributes: ["user_id", "name", "email", "registration_date"],
@@ -113,7 +113,7 @@ router.get("/", limiter, async (req, res) => {
 });
 
 // ✅ VISUALIZAR USUÁRIO ESPECÍFICO
-router.post("/getUserById", limiter, async (req, res) => {
+router.post("/view-id-user", limiter, async (req, res) => {
   try {
     const { id } = req.body;
 
@@ -137,7 +137,7 @@ router.post("/getUserById", limiter, async (req, res) => {
 });
 
 // ✅ ATUALIZAR USUÁRIO ESPECÍFICO
-router.put("/:id", limiter, async (req, res) => {
+router.put("/update-id-user/:id", limiter, async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const user = await User.findByPk(req.params.id);
@@ -166,9 +166,67 @@ router.put("/:id", limiter, async (req, res) => {
 });
 
 // ✅ DELETAR USUÁRIO ESPECÍFICO
-router.delete("/:id", limiter, async (req, res) => {
+router.delete("/delete-id-user/:id", limiter, async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    await user.destroy();
+    res.json({ message: "Usuário deletado com sucesso" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao deletar usuário" });
+  }
+});
+
+// ✅ VISUALIZAR O USUÁRIO LOGADO
+router.get("/view-user", limiter, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.userId, {
+      attributes: ["user_id", "name", "email", "registration_date"],
+    });
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao buscar usuário logado" });
+  }
+});
+
+// ✅ ATUALIZAR O USUÁRIO LOGADO
+router.put("/update-user", limiter, async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const user = await User.findByPk(req.userId);
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    const updatedData = {};
+    if (name) updatedData.name = name;
+    if (email) updatedData.email = email;
+    if (password)
+      updatedData.password_hash = await bcrypt.hash(password, 10);
+
+    await user.update(updatedData);
+
+    res.json({
+      message: "Usuário atualizado com sucesso",
+      user: {
+        id: user.user_id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao atualizar usuário" });
+  }
+});
+
+// ✅ DELETAR O USUÁRIO LOGADO
+router.delete("/delete-user", limiter, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.userId);
     if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
 
     await user.destroy();
